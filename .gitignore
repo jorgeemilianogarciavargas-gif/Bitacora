@@ -1,0 +1,18 @@
+# Datos personales locales
+datos/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Sistema/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Paquetes temporales
+*.zip
