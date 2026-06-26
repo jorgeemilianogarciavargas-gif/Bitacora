@@ -378,6 +378,7 @@ function setupTabs() {
 function setupForms() {
   $("#entryDate").value = todayISO();
   $('input[name="paymentDate"]').value = todayISO();
+  loadEntryIntoForm(todayISO());
 
   $("#entryForm").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -390,19 +391,12 @@ function setupForms() {
     else state.entries.push(entry);
     saveState();
     renderAll();
+    loadEntryIntoForm(entry.date);
     alert("Registro guardado.");
   });
 
   $("#entryDate").addEventListener("change", (event) => {
-    const entry = state.entries.find((item) => item.date === event.target.value);
-    const form = $("#entryForm");
-    form.reset();
-    $("#entryDate").value = event.target.value;
-    if (!entry) return;
-    Object.entries(entry).forEach(([key, value]) => {
-      const field = form.elements[key];
-      if (field) field.value = value;
-    });
+    loadEntryIntoForm(event.target.value);
   });
 
   $("#debtForm").addEventListener("submit", (event) => {
@@ -431,6 +425,23 @@ function setupForms() {
   });
 
   $("#chartType").addEventListener("change", renderChart);
+}
+
+function loadEntryIntoForm(entryDate) {
+  const form = $("#entryForm");
+  const entry = state.entries.find((item) => item.date === entryDate);
+  form.reset();
+  $("#entryDate").value = entryDate;
+  if (!entry) {
+    form.elements.exercise.value = "no";
+    form.elements.nofap.value = "";
+    return;
+  }
+  Object.entries(entry).forEach(([key, value]) => {
+    if (key === "date") return;
+    const field = form.elements[key];
+    if (field) field.value = value;
+  });
 }
 
 function setupBackup() {
@@ -466,7 +477,7 @@ function setupBackup() {
 }
 
 function setupPWA() {
-  if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator && ["http:", "https:"].includes(location.protocol)) {
     navigator.serviceWorker.register("service-worker.js");
   }
   window.addEventListener("beforeinstallprompt", (event) => {
