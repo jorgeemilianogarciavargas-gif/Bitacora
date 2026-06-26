@@ -10,6 +10,7 @@ Incluye dos versiones:
 ## Funciones
 
 - Registro diario editable por fecha.
+- Apartado de ejercicio para planear que toca cada dia, rutina y duracion.
 - Panel de los ultimos siete dias.
 - Graficas de habitos, bienestar, avance academico y deudas.
 - Historial completo de registros.

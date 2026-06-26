@@ -24,6 +24,7 @@
     <nav class="tabs" aria-label="Secciones">
       <button class="tab active" data-tab="panel" type="button">Panel</button>
       <button class="tab" data-tab="registro" type="button">Registro</button>
+      <button class="tab" data-tab="ejercicio" type="button">Ejercicio</button>
       <button class="tab" data-tab="deudas" type="button">Deudas</button>
       <button class="tab" data-tab="graficas" type="button">Graficas</button>
       <button class="tab" data-tab="datos" type="button">Datos</button>
@@ -57,6 +58,11 @@
       <section class="sheet">
         <h2>Registros recientes</h2>
         <div id="recentEntries" class="list"></div>
+      </section>
+
+      <section class="sheet">
+        <h2>Ejercicio de hoy</h2>
+        <div id="todayExercise" class="list"></div>
       </section>
     </section>
 
@@ -111,6 +117,44 @@
         </label>
         <button class="primary wide" type="submit">Guardar registro</button>
       </form>
+    </section>
+
+    <section id="ejercicio" class="view">
+      <form id="exerciseForm" class="sheet form-grid">
+        <h2>Plan de ejercicio</h2>
+        <label>Fecha
+          <input name="date" type="date" required>
+        </label>
+        <label>Que toca
+          <input name="workout" type="text" maxlength="80" placeholder="Ej. Pierna, push, cardio, descanso activo" required>
+        </label>
+        <label>Rutina
+          <textarea name="routine" rows="5" maxlength="700" placeholder="Ej. Sentadilla 4x8, desplantes 3x12, pantorrilla 4x15"></textarea>
+        </label>
+        <label>Tiempo estimado (min)
+          <input name="plannedMinutes" type="number" min="0" step="1">
+        </label>
+        <label>Tiempo real (min)
+          <input name="actualMinutes" type="number" min="0" step="1">
+        </label>
+        <label>Estado
+          <select name="status">
+            <option value="pendiente">Pendiente</option>
+            <option value="hecho">Hecho</option>
+            <option value="parcial">Parcial</option>
+            <option value="descanso">Descanso</option>
+          </select>
+        </label>
+        <label class="wide">Nota
+          <input name="note" type="text" maxlength="180">
+        </label>
+        <button class="primary wide" type="submit">Guardar ejercicio</button>
+      </form>
+
+      <section class="sheet">
+        <h2>Semana de ejercicio</h2>
+        <div id="exerciseWeek" class="list"></div>
+      </section>
     </section>
 
     <section id="deudas" class="view">

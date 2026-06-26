@@ -27,10 +27,11 @@ function number(value) {
 }
 
 function loadState() {
-  const fallback = { entries: [], debts: [], payments: [], debtMonths: [] };
+  const fallback = { entries: [], debts: [], payments: [], debtMonths: [], exercisePlans: [] };
   try {
     const loaded = { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") };
     loaded.debtMonths = loaded.debtMonths || [];
+    loaded.exercisePlans = loaded.exercisePlans || [];
     return loaded;
   } catch {
     return fallback;
@@ -112,6 +113,7 @@ function renderAll() {
   renderDebtOptions();
   renderPanel();
   renderDebts();
+  renderExercise();
   renderChart();
 }
 
@@ -157,6 +159,73 @@ function renderPanel() {
       ${entry.note ? `<small>${escapeHTML(entry.note)}</small>` : ""}
     </article>
   `).join("") : emptyHTML();
+
+  const todayPlan = state.exercisePlans.find((plan) => plan.date === todayISO());
+  $("#todayExercise").innerHTML = todayPlan ? exerciseCardHTML(todayPlan, false) : `
+    <article class="row">
+      <div class="row-header">
+        <span>Sin rutina para hoy</span>
+        <span class="pill">Pendiente</span>
+      </div>
+      <small>Ve a la pestaña Ejercicio para anotar qué toca y cuánto tiempo.</small>
+    </article>
+  `;
+}
+
+function renderExercise() {
+  const today = todayISO();
+  if ($('input[name="date"]', $("#exerciseForm"))) {
+    const dateField = $('input[name="date"]', $("#exerciseForm"));
+    if (!dateField.value) dateField.value = today;
+  }
+  const start = new Date(today);
+  start.setDate(start.getDate() - 3);
+  const end = new Date(today);
+  end.setDate(end.getDate() + 3);
+  const startISO = start.toISOString().slice(0, 10);
+  const endISO = end.toISOString().slice(0, 10);
+  const plans = state.exercisePlans
+    .filter((plan) => plan.date >= startISO && plan.date <= endISO)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  $("#exerciseWeek").innerHTML = plans.length ? plans.map((plan) => exerciseCardHTML(plan, true)).join("") : emptyHTML();
+
+  $$("[data-load-exercise]").forEach((button) => {
+    button.addEventListener("click", () => loadExerciseIntoForm(button.dataset.loadExercise));
+  });
+  $$("[data-delete-exercise]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!confirm("¿Eliminar este plan de ejercicio?")) return;
+      state.exercisePlans = state.exercisePlans.filter((plan) => plan.date !== button.dataset.deleteExercise);
+      saveState();
+      renderAll();
+    });
+  });
+}
+
+function exerciseCardHTML(plan, withActions) {
+  const statusLabels = {
+    pendiente: "Pendiente",
+    hecho: "Hecho",
+    parcial: "Parcial",
+    descanso: "Descanso",
+  };
+  return `
+    <article class="row">
+      <div class="row-header">
+        <span>${plan.date} · ${escapeHTML(plan.workout || "Sin nombre")}</span>
+        <span class="pill">${statusLabels[plan.status] || plan.status || "Pendiente"}</span>
+      </div>
+      ${plan.routine ? `<small>${escapeHTML(plan.routine).replace(/\n/g, "<br>")}</small>` : ""}
+      <small>Estimado: ${number(plan.plannedMinutes) || 0} min | Real: ${number(plan.actualMinutes) || 0} min</small>
+      ${plan.note ? `<small>${escapeHTML(plan.note)}</small>` : ""}
+      ${withActions ? `
+        <div class="inline-actions">
+          <button class="ghost-dark" type="button" data-load-exercise="${plan.date}">Editar</button>
+          <button class="danger" type="button" data-delete-exercise="${plan.date}">Eliminar</button>
+        </div>
+      ` : ""}
+    </article>
+  `;
 }
 
 function renderDebtOptions() {
@@ -412,6 +481,12 @@ function setupTabs() {
       $$(".view").forEach((view) => view.classList.remove("active"));
       button.classList.add("active");
       $(`#${button.dataset.tab}`).classList.add("active");
+      if (button.dataset.tab === "registro") {
+        loadEntryIntoForm($("#entryDate").value || todayISO());
+      }
+      if (button.dataset.tab === "ejercicio") {
+        loadExerciseIntoForm($('input[name="date"]', $("#exerciseForm")).value || todayISO());
+      }
       renderChart();
     });
   });
@@ -449,6 +524,30 @@ function setupForms() {
     event.currentTarget.reset();
     saveState();
     renderAll();
+  });
+
+  $("#exerciseForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const existingIndex = state.exercisePlans.findIndex((plan) => plan.date === data.date);
+    if (existingIndex >= 0) state.exercisePlans[existingIndex] = data;
+    else state.exercisePlans.push(data);
+
+    const entry = state.entries.find((item) => item.date === data.date);
+    if (entry) {
+      entry.exercise = data.status === "hecho" || data.status === "parcial" ? "si" : entry.exercise;
+    } else if (data.status === "hecho" || data.status === "parcial") {
+      state.entries.push({ date: data.date, exercise: "si" });
+    }
+
+    saveState();
+    renderAll();
+    loadExerciseIntoForm(data.date);
+    alert("Ejercicio guardado.");
+  });
+
+  $('input[name="date"]', $("#exerciseForm")).addEventListener("change", (event) => {
+    loadExerciseIntoForm(event.target.value);
   });
 
   $("#debtMonthForm").addEventListener("submit", (event) => {
@@ -527,6 +626,7 @@ function setupBackup() {
     state.debts = imported.debts || [];
     state.payments = imported.payments || [];
     state.debtMonths = imported.debtMonths || [];
+    state.exercisePlans = imported.exercisePlans || [];
     saveState();
     renderAll();
   });
@@ -537,8 +637,22 @@ function setupBackup() {
     state.debts = [];
     state.payments = [];
     state.debtMonths = [];
+    state.exercisePlans = [];
     saveState();
     renderAll();
+  });
+}
+
+function loadExerciseIntoForm(dateValue) {
+  const form = $("#exerciseForm");
+  const plan = state.exercisePlans.find((item) => item.date === dateValue);
+  form.reset();
+  form.elements.date.value = dateValue;
+  form.elements.status.value = "pendiente";
+  if (!plan) return;
+  Object.entries(plan).forEach(([key, value]) => {
+    const field = form.elements[key];
+    if (field) field.value = value;
   });
 }
 
