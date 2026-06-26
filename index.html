@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#152238">
+  <meta name="description" content="Bitacora movil para progreso personal, habitos, estudio y deudas.">
+  <title>Proyecto Bitacora</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Proyecto Bitacora</p>
+      <h1>Panel movil</h1>
+      <p class="subtitle">Progreso personal, academico, habitos y deudas.</p>
+    </div>
+    <button id="installButton" class="ghost hidden" type="button">Instalar</button>
+  </header>
+
+  <main>
+    <nav class="tabs" aria-label="Secciones">
+      <button class="tab active" data-tab="panel" type="button">Panel</button>
+      <button class="tab" data-tab="registro" type="button">Registro</button>
+      <button class="tab" data-tab="deudas" type="button">Deudas</button>
+      <button class="tab" data-tab="graficas" type="button">Graficas</button>
+      <button class="tab" data-tab="datos" type="button">Datos</button>
+    </nav>
+
+    <section id="panel" class="view active">
+      <div class="cards">
+        <article class="card">
+          <span>Dias 7D</span>
+          <strong id="kpiDays">0</strong>
+        </article>
+        <article class="card green">
+          <span>Cumplimiento</span>
+          <strong id="kpiCompliance">0%</strong>
+        </article>
+        <article class="card amber">
+          <span>Energia</span>
+          <strong id="kpiEnergy">0/10</strong>
+        </article>
+        <article class="card red">
+          <span>Deuda</span>
+          <strong id="kpiDebt">$0</strong>
+        </article>
+      </div>
+
+      <section class="sheet">
+        <h2>Resumen de 7 dias</h2>
+        <div id="weekSummary" class="summary-list"></div>
+      </section>
+
+      <section class="sheet">
+        <h2>Registros recientes</h2>
+        <div id="recentEntries" class="list"></div>
+      </section>
+    </section>
+
+    <section id="registro" class="view">
+      <form id="entryForm" class="sheet form-grid">
+        <h2>Registro diario</h2>
+        <label>Fecha
+          <input id="entryDate" name="entryDate" type="date" required>
+        </label>
+        <label>Cisco: submodulos
+          <input name="ciscoModules" type="number" min="0" step="1">
+        </label>
+        <label>UVEG: avance %
+          <input name="uvegProgress" type="number" min="0" max="100" step="1">
+        </label>
+        <label>TUCH: avance %
+          <input name="tuchProgress" type="number" min="0" max="100" step="1">
+        </label>
+        <label>Argos: minutos
+          <input name="argosMinutes" type="number" min="0" step="1">
+        </label>
+        <label>Centinela: minutos
+          <input name="centinelaMinutes" type="number" min="0" step="1">
+        </label>
+        <label>Ejercicio
+          <select name="exercise">
+            <option value="no">No</option>
+            <option value="si">Si</option>
+          </select>
+        </label>
+        <label>Ingles: minutos
+          <input name="englishMinutes" type="number" min="0" step="1">
+        </label>
+        <label>NoFap
+          <select name="nofap">
+            <option value="">Sin dato</option>
+            <option value="cumplido">Cumplido</option>
+            <option value="reinicio">Reinicio</option>
+          </select>
+        </label>
+        <label>Sueno: horas
+          <input name="sleepHours" type="number" min="0" max="24" step="0.5">
+        </label>
+        <label>Energia 1-10
+          <input name="energy" type="number" min="0" max="10" step="1">
+        </label>
+        <label>Gasto evitado
+          <input name="avoidedSpending" type="number" min="0" step="0.01">
+        </label>
+        <label class="wide">Nota breve
+          <input name="note" type="text" maxlength="180">
+        </label>
+        <button class="primary wide" type="submit">Guardar registro</button>
+      </form>
+    </section>
+
+    <section id="deudas" class="view">
+      <form id="debtForm" class="sheet form-grid">
+        <h2>Agregar deuda</h2>
+        <label>Nombre
+          <input name="name" type="text" required>
+        </label>
+        <label>Saldo inicial
+          <input name="initialBalance" type="number" min="0" step="0.01" required>
+        </label>
+        <label>Pago minimo
+          <input name="minimumPayment" type="number" min="0" step="0.01">
+        </label>
+        <label>Para no generar intereses
+          <input name="noInterestPayment" type="number" min="0" step="0.01">
+        </label>
+        <label>Meta mensual
+          <input name="monthlyGoal" type="number" min="0" step="0.01">
+        </label>
+        <button class="primary wide" type="submit">Guardar deuda</button>
+      </form>
+
+      <form id="paymentForm" class="sheet form-grid">
+        <h2>Registrar pago</h2>
+        <label>Fecha
+          <input name="paymentDate" type="date" required>
+        </label>
+        <label>Deuda
+          <select name="debtId" required></select>
+        </label>
+        <label>Cantidad
+          <input name="amount" type="number" min="0.01" step="0.01" required>
+        </label>
+        <label class="wide">Nota
+          <input name="note" type="text" maxlength="120">
+        </label>
+        <button class="primary wide" type="submit">Guardar pago</button>
+      </form>
+
+      <section class="sheet">
+        <h2>Estado de deudas</h2>
+        <div id="debtList" class="list"></div>
+      </section>
+    </section>
+
+    <section id="graficas" class="view">
+      <section class="sheet">
+        <div class="chart-toolbar">
+          <h2>Graficas</h2>
+          <select id="chartType">
+            <option value="habits">Habitos y bienestar</option>
+            <option value="study">Avance academico</option>
+            <option value="debt">Saldos de deuda</option>
+            <option value="payments">Pagos del mes</option>
+          </select>
+        </div>
+        <canvas id="chartCanvas" width="900" height="520"></canvas>
+      </section>
+    </section>
+
+    <section id="datos" class="view">
+      <section class="sheet">
+        <h2>Respaldo</h2>
+        <p>Los datos se guardan en este dispositivo. Exporta un respaldo antes de cambiar de celular o limpiar el navegador.</p>
+        <div class="actions">
+          <button id="exportButton" class="primary" type="button">Exportar JSON</button>
+          <label class="file-button">Importar JSON
+            <input id="importFile" type="file" accept="application/json">
+          </label>
+        </div>
+      </section>
+
+      <section class="sheet danger-zone">
+        <h2>Zona de cuidado</h2>
+        <button id="clearButton" class="danger" type="button">Borrar datos de este dispositivo</button>
+      </section>
+    </section>
+  </main>
+
+  <template id="emptyTemplate">
+    <p class="empty">Todavia no hay datos.</p>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

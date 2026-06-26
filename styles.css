@@ -1,0 +1,296 @@
+:root {
+  --navy: #152238;
+  --blue: #2855a6;
+  --sky: #dce8f8;
+  --ice: #f4f7fb;
+  --green: #2e7d5b;
+  --green-soft: #ddf1e7;
+  --amber: #c78318;
+  --amber-soft: #fff0d5;
+  --red: #b64949;
+  --red-soft: #f8dddd;
+  --ink: #243247;
+  --muted: #65758b;
+  --white: #ffffff;
+  --border: #d6dfea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ice);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem 1rem;
+  background: var(--navy);
+  color: var(--white);
+  box-shadow: 0 6px 20px rgb(21 34 56 / 18%);
+}
+
+.eyebrow,
+.subtitle {
+  margin: 0;
+  color: #d8e4f3;
+  font-size: 0.85rem;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0.25rem;
+  font-size: clamp(1.45rem, 6vw, 2.2rem);
+}
+
+h2 {
+  margin-bottom: 0.85rem;
+  font-size: 1.1rem;
+  color: var(--navy);
+}
+
+main {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 1rem 1rem 5rem;
+}
+
+.tabs {
+  position: sticky;
+  top: 91px;
+  z-index: 9;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.85rem;
+  background: var(--ice);
+}
+
+.tab,
+button,
+.file-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab {
+  flex: 0 0 auto;
+  background: var(--white);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+.tab.active,
+.primary {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgb(255 255 255 / 40%);
+}
+
+.hidden {
+  display: none;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.card,
+.sheet {
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: var(--white);
+  box-shadow: 0 8px 24px rgb(21 34 56 / 8%);
+}
+
+.card {
+  padding: 1rem;
+}
+
+.card span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.card strong {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--navy);
+  font-size: 1.55rem;
+}
+
+.card.green {
+  background: var(--green-soft);
+}
+
+.card.amber {
+  background: var(--amber-soft);
+}
+
+.card.red {
+  background: var(--red-soft);
+}
+
+.sheet {
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+input,
+select {
+  min-height: 2.75rem;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.list,
+.summary-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.row {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: #fbfdff;
+}
+
+.row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  font-weight: 800;
+}
+
+.row small,
+.muted {
+  color: var(--muted);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--sky);
+  color: var(--navy);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.actions,
+.chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.file-button {
+  display: inline-block;
+  background: var(--green);
+  color: var(--white);
+}
+
+.file-button input {
+  display: none;
+}
+
+.danger {
+  background: var(--red);
+  color: var(--white);
+}
+
+.danger-zone {
+  border-color: #efb9b9;
+}
+
+canvas {
+  width: 100%;
+  min-height: 330px;
+  border-radius: 0.8rem;
+  background: var(--white);
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (min-width: 720px) {
+  .cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

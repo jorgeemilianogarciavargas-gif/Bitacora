@@ -1,6 +1,11 @@
-# Proyecto Bitacora 1.1
+# Proyecto Bitacora 1.2
 
-Aplicacion local de escritorio para registrar progreso personal, academico, habitos y deudas.
+Aplicacion para registrar progreso personal, academico, habitos y deudas.
+
+Incluye dos versiones:
+
+- `index.html`: version movil/PWA para navegador y GitHub Pages.
+- `bitacora.pyw`: version local de escritorio para Windows.
 
 ## Funciones
 
@@ -12,12 +17,30 @@ Aplicacion local de escritorio para registrar progreso personal, academico, habi
 - Pago minimo y pago para no generar intereses por deuda.
 - Base de datos SQLite local.
 
-## Requisitos
+## Uso en movil
+
+Abre la version web publicada en GitHub Pages:
+
+`https://jorgeemilianogarciavargas-gif.github.io/Bitacora/`
+
+En Android/Chrome:
+
+1. Abre el enlace.
+2. Toca el menu de tres puntos.
+3. Elige "Agregar a pantalla principal" o "Instalar app".
+
+En iPhone/Safari:
+
+1. Abre el enlace.
+2. Toca Compartir.
+3. Elige "Agregar a inicio".
+
+Los datos moviles se guardan en el navegador de ese celular. Usa `Datos > Exportar JSON` para respaldarlos.
+
+## Uso en Windows
 
 - Windows.
 - Python 3 con Tkinter incluido.
-
-## Uso
 
 1. Descarga o clona este repositorio.
 2. Ejecuta `iniciar_bitacora.bat`.
@@ -27,7 +50,7 @@ Aplicacion local de escritorio para registrar progreso personal, academico, habi
 
 Este repositorio no incluye datos personales ni base de datos.
 
-Los archivos generados localmente en `datos/` estan ignorados por Git. Para respaldar tu informacion, copia manualmente `datos/bitacora.db` en un lugar seguro.
+Los archivos generados localmente en `datos/` estan ignorados por Git. Para respaldar tu informacion de escritorio, copia manualmente `datos/bitacora.db` en un lugar seguro. Para respaldar la version movil, exporta el JSON desde la seccion `Datos`.
 
 ## Nota
 

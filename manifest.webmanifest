@@ -1,0 +1,18 @@
+{
+  "name": "Proyecto Bitacora",
+  "short_name": "Bitacora",
+  "description": "Sistema movil de progreso personal, academico, habitos y deudas.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#152238",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
