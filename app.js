@@ -27,11 +27,12 @@ function number(value) {
 }
 
 function loadState() {
-  const fallback = { entries: [], debts: [], payments: [], debtMonths: [], exercisePlans: [] };
+  const fallback = { entries: [], debts: [], payments: [], debtMonths: [], exercisePlans: [], dailyTasks: [] };
   try {
     const loaded = { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") };
     loaded.debtMonths = loaded.debtMonths || [];
     loaded.exercisePlans = loaded.exercisePlans || [];
+    loaded.dailyTasks = loaded.dailyTasks || [];
     return loaded;
   } catch {
     return fallback;
@@ -112,6 +113,7 @@ function debtMonthStatus(debt, paidMonth, config) {
 function renderAll() {
   renderDebtOptions();
   renderPanel();
+  renderTasks();
   renderDebts();
   renderExercise();
   renderChart();
@@ -168,6 +170,105 @@ function renderPanel() {
         <span class="pill">Pendiente</span>
       </div>
       <small>Ve a la pestaña Ejercicio para anotar qué toca y cuánto tiempo.</small>
+    </article>
+  `;
+
+  const todaysTasks = tasksForDate(todayISO());
+  const doneTasks = todaysTasks.filter((task) => task.status === "hecha").length;
+  $("#todayTasks").innerHTML = todaysTasks.length ? `
+    <div class="row">
+      <div class="row-header">
+        <span>Avance del dia</span>
+        <span class="pill">${doneTasks}/${todaysTasks.length}</span>
+      </div>
+      <small>${Math.round((doneTasks / todaysTasks.length) * 100)}% completado</small>
+    </div>
+    ${todaysTasks.map((task) => taskCardHTML(task, false)).join("")}
+  ` : `
+    <article class="row">
+      <div class="row-header">
+        <span>Sin tareas para hoy</span>
+        <span class="pill">Libre</span>
+      </div>
+      <small>Ve a la pestaña Tareas para crear pendientes personalizados.</small>
+    </article>
+  `;
+}
+
+function tasksForDate(dateValue) {
+  return state.dailyTasks
+    .filter((task) => task.date === dateValue)
+    .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority) || a.title.localeCompare(b.title));
+}
+
+function priorityRank(priority) {
+  return { alta: 0, media: 1, baja: 2 }[priority] ?? 3;
+}
+
+function renderTasks() {
+  const form = $("#taskForm");
+  if (!form.elements.date.value) form.elements.date.value = todayISO();
+  const selectedDate = form.elements.date.value || todayISO();
+  const tasks = tasksForDate(selectedDate);
+  const done = tasks.filter((task) => task.status === "hecha").length;
+  const partial = tasks.filter((task) => task.status === "parcial").length;
+  const minutes = tasks.reduce((sum, task) => sum + number(task.estimatedMinutes), 0);
+  $("#taskDaySummary").innerHTML = tasks.length ? `
+    <div class="row">
+      <div class="row-header">
+        <span>${selectedDate}</span>
+        <span class="pill">${done}/${tasks.length} hechas</span>
+      </div>
+      <small>Parciales: ${partial} | Tiempo estimado: ${minutes} min</small>
+    </div>
+  ` : "";
+  $("#taskList").innerHTML = tasks.length ? tasks.map((task) => taskCardHTML(task, true)).join("") : emptyHTML();
+
+  $$("[data-load-task]").forEach((button) => {
+    button.addEventListener("click", () => loadTaskIntoForm(button.dataset.loadTask));
+  });
+  $$("[data-toggle-task]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const task = state.dailyTasks.find((item) => item.id === button.dataset.toggleTask);
+      if (!task) return;
+      task.status = task.status === "hecha" ? "pendiente" : "hecha";
+      saveState();
+      renderAll();
+    });
+  });
+  $$("[data-delete-task]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!confirm("¿Eliminar esta tarea?")) return;
+      state.dailyTasks = state.dailyTasks.filter((task) => task.id !== button.dataset.deleteTask);
+      saveState();
+      renderAll();
+    });
+  });
+}
+
+function taskCardHTML(task, withActions) {
+  const statusLabels = {
+    pendiente: "Pendiente",
+    hecha: "Hecha",
+    parcial: "Parcial",
+    saltada: "Saltada",
+  };
+  const priorityLabels = { alta: "Alta", media: "Media", baja: "Baja" };
+  return `
+    <article class="row">
+      <div class="row-header">
+        <span>${escapeHTML(task.title)}</span>
+        <span class="pill">${statusLabels[task.status] || "Pendiente"}</span>
+      </div>
+      <small>${task.category ? `${escapeHTML(task.category)} · ` : ""}Prioridad: ${priorityLabels[task.priority] || "Media"} · ${number(task.estimatedMinutes) || 0} min</small>
+      ${task.note ? `<small>${escapeHTML(task.note)}</small>` : ""}
+      ${withActions ? `
+        <div class="inline-actions">
+          <button class="ghost-dark" type="button" data-toggle-task="${task.id}">${task.status === "hecha" ? "Marcar pendiente" : "Marcar hecha"}</button>
+          <button class="ghost-dark" type="button" data-load-task="${task.id}">Editar</button>
+          <button class="danger" type="button" data-delete-task="${task.id}">Eliminar</button>
+        </div>
+      ` : ""}
     </article>
   `;
 }
@@ -484,6 +585,10 @@ function setupTabs() {
       if (button.dataset.tab === "registro") {
         loadEntryIntoForm($("#entryDate").value || todayISO());
       }
+      if (button.dataset.tab === "tareas") {
+        if (!$("#taskForm").elements.date.value) $("#taskForm").elements.date.value = todayISO();
+        renderTasks();
+      }
       if (button.dataset.tab === "ejercicio") {
         loadExerciseIntoForm($('input[name="date"]', $("#exerciseForm")).value || todayISO());
       }
@@ -524,6 +629,37 @@ function setupForms() {
     event.currentTarget.reset();
     saveState();
     renderAll();
+  });
+
+  $("#taskForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const task = {
+      id: data.id || uid(),
+      date: data.date,
+      title: data.title,
+      category: data.category,
+      priority: data.priority,
+      status: data.status,
+      estimatedMinutes: data.estimatedMinutes,
+      note: data.note,
+    };
+    const existingIndex = state.dailyTasks.findIndex((item) => item.id === task.id);
+    if (existingIndex >= 0) state.dailyTasks[existingIndex] = task;
+    else state.dailyTasks.push(task);
+    saveState();
+    renderAll();
+    clearTaskForm(task.date);
+    alert("Tarea guardada.");
+  });
+
+  $("#clearTaskForm").addEventListener("click", () => {
+    clearTaskForm($("#taskForm").elements.date.value || todayISO());
+  });
+
+  $("#taskForm").elements.date.addEventListener("change", () => {
+    clearTaskForm($("#taskForm").elements.date.value);
+    renderTasks();
   });
 
   $("#exerciseForm").addEventListener("submit", (event) => {
@@ -627,6 +763,7 @@ function setupBackup() {
     state.payments = imported.payments || [];
     state.debtMonths = imported.debtMonths || [];
     state.exercisePlans = imported.exercisePlans || [];
+    state.dailyTasks = imported.dailyTasks || [];
     saveState();
     renderAll();
   });
@@ -638,9 +775,33 @@ function setupBackup() {
     state.payments = [];
     state.debtMonths = [];
     state.exercisePlans = [];
+    state.dailyTasks = [];
     saveState();
     renderAll();
   });
+}
+
+function loadTaskIntoForm(taskId) {
+  const task = state.dailyTasks.find((item) => item.id === taskId);
+  if (!task) return;
+  const form = $("#taskForm");
+  form.elements.id.value = task.id;
+  form.elements.date.value = task.date;
+  form.elements.title.value = task.title;
+  form.elements.category.value = task.category || "";
+  form.elements.priority.value = task.priority || "media";
+  form.elements.status.value = task.status || "pendiente";
+  form.elements.estimatedMinutes.value = task.estimatedMinutes || "";
+  form.elements.note.value = task.note || "";
+}
+
+function clearTaskForm(dateValue = todayISO()) {
+  const form = $("#taskForm");
+  form.reset();
+  form.elements.id.value = "";
+  form.elements.date.value = dateValue;
+  form.elements.priority.value = "media";
+  form.elements.status.value = "pendiente";
 }
 
 function loadExerciseIntoForm(dateValue) {

@@ -24,6 +24,7 @@
     <nav class="tabs" aria-label="Secciones">
       <button class="tab active" data-tab="panel" type="button">Panel</button>
       <button class="tab" data-tab="registro" type="button">Registro</button>
+      <button class="tab" data-tab="tareas" type="button">Tareas</button>
       <button class="tab" data-tab="ejercicio" type="button">Ejercicio</button>
       <button class="tab" data-tab="deudas" type="button">Deudas</button>
       <button class="tab" data-tab="graficas" type="button">Graficas</button>
@@ -63,6 +64,11 @@
       <section class="sheet">
         <h2>Ejercicio de hoy</h2>
         <div id="todayExercise" class="list"></div>
+      </section>
+
+      <section class="sheet">
+        <h2>Tareas de hoy</h2>
+        <div id="todayTasks" class="list"></div>
       </section>
     </section>
 
@@ -117,6 +123,51 @@
         </label>
         <button class="primary wide" type="submit">Guardar registro</button>
       </form>
+    </section>
+
+    <section id="tareas" class="view">
+      <form id="taskForm" class="sheet form-grid">
+        <h2>Tarea diaria personalizada</h2>
+        <input name="id" type="hidden">
+        <label>Fecha
+          <input name="date" type="date" required>
+        </label>
+        <label>Tarea
+          <input name="title" type="text" maxlength="100" placeholder="Ej. Repasar Cisco, pagar tarjeta, limpiar escritorio" required>
+        </label>
+        <label>Categoria
+          <input name="category" type="text" maxlength="40" placeholder="Personal, estudio, casa, finanzas">
+        </label>
+        <label>Prioridad
+          <select name="priority">
+            <option value="media">Media</option>
+            <option value="alta">Alta</option>
+            <option value="baja">Baja</option>
+          </select>
+        </label>
+        <label>Estado
+          <select name="status">
+            <option value="pendiente">Pendiente</option>
+            <option value="hecha">Hecha</option>
+            <option value="parcial">Parcial</option>
+            <option value="saltada">Saltada</option>
+          </select>
+        </label>
+        <label>Tiempo estimado (min)
+          <input name="estimatedMinutes" type="number" min="0" step="1">
+        </label>
+        <label class="wide">Nota
+          <input name="note" type="text" maxlength="180">
+        </label>
+        <button class="primary wide" type="submit">Guardar tarea</button>
+        <button id="clearTaskForm" class="ghost-dark wide" type="button">Nueva tarea</button>
+      </form>
+
+      <section class="sheet">
+        <h2>Tareas del dia</h2>
+        <div id="taskDaySummary" class="summary-list"></div>
+        <div id="taskList" class="list"></div>
+      </section>
     </section>
 
     <section id="ejercicio" class="view">
