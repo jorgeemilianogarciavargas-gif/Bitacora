@@ -27,9 +27,11 @@ function number(value) {
 }
 
 function loadState() {
-  const fallback = { entries: [], debts: [], payments: [] };
+  const fallback = { entries: [], debts: [], payments: [], debtMonths: [] };
   try {
-    return { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") };
+    const loaded = { ...fallback, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") };
+    loaded.debtMonths = loaded.debtMonths || [];
+    return loaded;
   } catch {
     return fallback;
   }
@@ -63,6 +65,10 @@ function currentMonth() {
   return monthOf(todayISO());
 }
 
+function todayTime() {
+  return new Date(`${todayISO()}T00:00:00`).getTime();
+}
+
 function debtPaidTotal(debtId) {
   return state.payments
     .filter((payment) => payment.debtId === debtId)
@@ -77,6 +83,29 @@ function debtPaidMonth(debtId, month = currentMonth()) {
 
 function debtPending(debt) {
   return Math.max(0, number(debt.initialBalance) - debtPaidTotal(debt.id));
+}
+
+function debtMonthConfig(debt, month = currentMonth()) {
+  const config = state.debtMonths.find((item) => item.debtId === debt.id && item.month === month);
+  return {
+    minimumPayment: config ? number(config.minimumPayment) : number(debt.minimumPayment),
+    noInterestPayment: config ? number(config.noInterestPayment) : number(debt.noInterestPayment),
+    monthlyGoal: config ? number(config.monthlyGoal) : number(debt.monthlyGoal),
+    dueDate: config ? config.dueDate || "" : "",
+  };
+}
+
+function debtMonthStatus(debt, paidMonth, config) {
+  if (debtPending(debt) <= 0) return "Liquidada";
+  if (config.noInterestPayment && paidMonth >= config.noInterestPayment) return "Sin intereses cubierto";
+  if (config.dueDate && new Date(`${config.dueDate}T00:00:00`).getTime() < todayTime()) {
+    if (config.noInterestPayment) return `Intereses: faltan ${money(config.noInterestPayment - paidMonth)}`;
+    const missing = config.minimumPayment ? Math.max(0, config.minimumPayment - paidMonth) : 0;
+    return missing ? `Vencida: faltan ${money(missing)}` : "Fecha vencida";
+  }
+  if (config.minimumPayment && paidMonth >= config.minimumPayment) return "Minimo cubierto";
+  if (config.minimumPayment) return `Faltan ${money(config.minimumPayment - paidMonth)}`;
+  return "Sin meta";
 }
 
 function renderAll() {
@@ -133,7 +162,7 @@ function renderPanel() {
 function renderDebtOptions() {
   const options = ['<option value="">Selecciona deuda</option>']
     .concat(state.debts.map((debt) => `<option value="${debt.id}">${escapeHTML(debt.name)}</option>`));
-  $$('select[name="debtId"]').forEach((select) => {
+  $$('select[name="debtId"], select[name="debtMonthId"]').forEach((select) => {
     const selected = select.value;
     select.innerHTML = options.join("");
     select.value = selected;
@@ -143,37 +172,35 @@ function renderDebtOptions() {
 function renderDebts() {
   const debtRows = state.debts.map((debt) => {
     const paidMonth = debtPaidMonth(debt.id);
-    const minimum = number(debt.minimumPayment);
-    const noInterest = number(debt.noInterestPayment);
-    let status = "Sin meta";
-    if (debtPending(debt) <= 0) status = "Liquidada";
-    else if (noInterest && paidMonth >= noInterest) status = "Sin intereses cubierto";
-    else if (minimum && paidMonth >= minimum) status = "Minimo cubierto";
-    else if (minimum) status = `Faltan ${money(minimum - paidMonth)}`;
+    const config = debtMonthConfig(debt);
+    const minimum = config.minimumPayment;
+    const noInterest = config.noInterestPayment;
+    const status = debtMonthStatus(debt, paidMonth, config);
 
-    return { debt, paidMonth, minimum, noInterest, status };
+    return { debt, paidMonth, minimum, noInterest, dueDate: config.dueDate, monthlyGoal: config.monthlyGoal, status };
   });
 
-  $("#debtTableBody").innerHTML = debtRows.length ? debtRows.map(({ debt, paidMonth, minimum, noInterest, status }) => `
+  $("#debtTableBody").innerHTML = debtRows.length ? debtRows.map(({ debt, paidMonth, minimum, noInterest, dueDate, monthlyGoal, status }) => `
     <tr>
       <td>${escapeHTML(debt.name)}</td>
       <td>${money(debtPending(debt))}</td>
       <td>${money(paidMonth)}</td>
       <td>${money(minimum)}</td>
       <td>${money(noInterest)}</td>
-      <td>${money(number(debt.monthlyGoal))}</td>
+      <td>${dueDate || "-"}</td>
+      <td>${money(monthlyGoal)}</td>
       <td><span class="pill">${status}</span></td>
     </tr>
-  `).join("") : `<tr><td colspan="7" class="empty-cell">Todavia no hay deudas.</td></tr>`;
+  `).join("") : `<tr><td colspan="8" class="empty-cell">Todavia no hay deudas.</td></tr>`;
 
-  $("#debtList").innerHTML = debtRows.length ? debtRows.map(({ debt, paidMonth, minimum, noInterest, status }) => `
+  $("#debtList").innerHTML = debtRows.length ? debtRows.map(({ debt, paidMonth, minimum, noInterest, dueDate, status }) => `
       <article class="row">
         <div class="row-header">
           <span>${escapeHTML(debt.name)}</span>
           <span class="pill">${status}</span>
         </div>
         <small>Pendiente: ${money(debtPending(debt))}</small>
-        <small>Pagado este mes: ${money(paidMonth)} | Minimo: ${money(minimum)} | Sin intereses: ${money(noInterest)}</small>
+        <small>Pagado este mes: ${money(paidMonth)} | Minimo: ${money(minimum)} | Sin intereses: ${money(noInterest)} | Limite: ${dueDate || "-"}</small>
         <button class="danger" type="button" data-delete-debt="${debt.id}">Eliminar deuda</button>
       </article>
     `).join("") : emptyHTML();
@@ -184,6 +211,7 @@ function renderDebts() {
       if (!confirm("Eliminar esta deuda tambien eliminara sus pagos. ¿Continuar?")) return;
       state.debts = state.debts.filter((debt) => debt.id !== debtId);
       state.payments = state.payments.filter((payment) => payment.debtId !== debtId);
+      state.debtMonths = state.debtMonths.filter((item) => item.debtId !== debtId);
       saveState();
       renderAll();
     });
@@ -252,9 +280,9 @@ function drawGroupedDebtBars(ctx) {
   const rows = state.debts.map((debt) => ({
     label: debt.name,
     paid: debtPaidMonth(debt.id),
-    minimum: number(debt.minimumPayment),
-    noInterest: number(debt.noInterestPayment),
-    goal: number(debt.monthlyGoal),
+    minimum: debtMonthConfig(debt).minimumPayment,
+    noInterest: debtMonthConfig(debt).noInterestPayment,
+    goal: debtMonthConfig(debt).monthlyGoal,
   }));
   const max = Math.max(...rows.flatMap((row) => [row.paid, row.minimum, row.noInterest, row.goal]), 1);
   const left = 185;
@@ -392,6 +420,7 @@ function setupTabs() {
 function setupForms() {
   $("#entryDate").value = todayISO();
   $('input[name="paymentDate"]').value = todayISO();
+  $('input[name="month"]').value = currentMonth();
   loadEntryIntoForm(todayISO());
 
   $("#entryForm").addEventListener("submit", (event) => {
@@ -420,6 +449,27 @@ function setupForms() {
     event.currentTarget.reset();
     saveState();
     renderAll();
+  });
+
+  $("#debtMonthForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const existingIndex = state.debtMonths.findIndex((item) => item.debtId === data.debtMonthId && item.month === data.month);
+    const config = {
+      debtId: data.debtMonthId,
+      month: data.month,
+      minimumPayment: data.minimumPayment,
+      noInterestPayment: data.noInterestPayment,
+      dueDate: data.dueDate,
+      monthlyGoal: data.monthlyGoal,
+    };
+    if (existingIndex >= 0) state.debtMonths[existingIndex] = config;
+    else state.debtMonths.push(config);
+    saveState();
+    renderAll();
+    event.currentTarget.reset();
+    $('input[name="month"]').value = currentMonth();
+    alert("Configuracion mensual guardada.");
   });
 
   $("#paymentForm").addEventListener("submit", (event) => {
@@ -476,6 +526,7 @@ function setupBackup() {
     state.entries = imported.entries || [];
     state.debts = imported.debts || [];
     state.payments = imported.payments || [];
+    state.debtMonths = imported.debtMonths || [];
     saveState();
     renderAll();
   });
@@ -485,6 +536,7 @@ function setupBackup() {
     state.entries = [];
     state.debts = [];
     state.payments = [];
+    state.debtMonths = [];
     saveState();
     renderAll();
   });

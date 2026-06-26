@@ -122,10 +122,10 @@
         <label>Saldo inicial
           <input name="initialBalance" type="number" min="0" step="0.01" required>
         </label>
-        <label>Pago minimo
+        <label>Pago minimo base
           <input name="minimumPayment" type="number" min="0" step="0.01">
         </label>
-        <label>Para no generar intereses
+        <label>Base para no generar intereses
           <input name="noInterestPayment" type="number" min="0" step="0.01">
         </label>
         <label>Meta mensual
@@ -151,6 +151,29 @@
         <button class="primary wide" type="submit">Guardar pago</button>
       </form>
 
+      <form id="debtMonthForm" class="sheet form-grid">
+        <h2>Configurar mes de deuda</h2>
+        <label>Mes
+          <input name="month" type="month" required>
+        </label>
+        <label>Deuda
+          <select name="debtMonthId" required></select>
+        </label>
+        <label>Pago minimo del mes
+          <input name="minimumPayment" type="number" min="0" step="0.01">
+        </label>
+        <label>Para no generar intereses
+          <input name="noInterestPayment" type="number" min="0" step="0.01">
+        </label>
+        <label>Fecha limite
+          <input name="dueDate" type="date">
+        </label>
+        <label>Meta mensual
+          <input name="monthlyGoal" type="number" min="0" step="0.01">
+        </label>
+        <button class="primary wide" type="submit">Guardar configuracion mensual</button>
+      </form>
+
       <section class="sheet">
         <h2>Estado de deudas</h2>
         <div class="table-wrap">
@@ -162,6 +185,7 @@
                 <th>Pagado mes</th>
                 <th>Minimo</th>
                 <th>Sin intereses</th>
+                <th>Fecha limite</th>
                 <th>Meta</th>
                 <th>Estado</th>
               </tr>

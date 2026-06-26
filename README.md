@@ -14,7 +14,7 @@ Incluye dos versiones:
 - Graficas de habitos, bienestar, avance academico y deudas.
 - Historial completo de registros.
 - Historial independiente de pagos, con multiples pagos por dia.
-- Pago minimo y pago para no generar intereses por deuda.
+- Pago minimo, pago para no generar intereses y fecha limite por mes.
 - Base de datos SQLite local.
 
 ## Uso en movil
