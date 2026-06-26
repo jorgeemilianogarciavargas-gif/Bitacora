@@ -141,7 +141,7 @@ function renderDebtOptions() {
 }
 
 function renderDebts() {
-  $("#debtList").innerHTML = state.debts.length ? state.debts.map((debt) => {
+  const debtRows = state.debts.map((debt) => {
     const paidMonth = debtPaidMonth(debt.id);
     const minimum = number(debt.minimumPayment);
     const noInterest = number(debt.noInterestPayment);
@@ -151,7 +151,22 @@ function renderDebts() {
     else if (minimum && paidMonth >= minimum) status = "Minimo cubierto";
     else if (minimum) status = `Faltan ${money(minimum - paidMonth)}`;
 
-    return `
+    return { debt, paidMonth, minimum, noInterest, status };
+  });
+
+  $("#debtTableBody").innerHTML = debtRows.length ? debtRows.map(({ debt, paidMonth, minimum, noInterest, status }) => `
+    <tr>
+      <td>${escapeHTML(debt.name)}</td>
+      <td>${money(debtPending(debt))}</td>
+      <td>${money(paidMonth)}</td>
+      <td>${money(minimum)}</td>
+      <td>${money(noInterest)}</td>
+      <td>${money(number(debt.monthlyGoal))}</td>
+      <td><span class="pill">${status}</span></td>
+    </tr>
+  `).join("") : `<tr><td colspan="7" class="empty-cell">Todavia no hay deudas.</td></tr>`;
+
+  $("#debtList").innerHTML = debtRows.length ? debtRows.map(({ debt, paidMonth, minimum, noInterest, status }) => `
       <article class="row">
         <div class="row-header">
           <span>${escapeHTML(debt.name)}</span>
@@ -161,8 +176,7 @@ function renderDebts() {
         <small>Pagado este mes: ${money(paidMonth)} | Minimo: ${money(minimum)} | Sin intereses: ${money(noInterest)}</small>
         <button class="danger" type="button" data-delete-debt="${debt.id}">Eliminar deuda</button>
       </article>
-    `;
-  }).join("") : emptyHTML();
+    `).join("") : emptyHTML();
 
   $$("[data-delete-debt]").forEach((button) => {
     button.addEventListener("click", () => {
